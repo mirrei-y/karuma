@@ -4,11 +4,13 @@ function getHeaders(): HeadersInit {
     const passphrase = localStorage.getItem("karuma_passphrase") || "";
     // TextEncoderを使用してUTF-8エンコードし、Base64に変換 (unescapeの代替)
     const bytes = new TextEncoder().encode(passphrase);
-    const binary = Array.from(bytes).map(b => String.fromCharCode(b)).join("");
+    const binary = Array.from(bytes)
+        .map((b) => String.fromCharCode(b))
+        .join("");
     const base64Passphrase = btoa(binary);
-    
+
     return {
-        "Authorization": `Bearer ${base64Passphrase}`,
+        Authorization: `Bearer ${base64Passphrase}`,
         "Content-Type": "application/json",
     };
 }

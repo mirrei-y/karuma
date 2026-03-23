@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import { Trash2 } from "@lucide/vue";
 import type { MessageData } from "../types";
 
@@ -11,10 +12,29 @@ const emit = defineEmits<{
     (e: "delete"): void;
 }>();
 
+const segmenter = new Intl.Segmenter("ja", { granularity: "grapheme" });
+
+const charCount = computed(() => {
+    return Array.from(segmenter.segment(props.modelValue.text)).length;
+});
+
 /** メッセージテキストを更新します。 */
 function updateText(event: Event) {
     const target = event.target as HTMLTextAreaElement;
-    emit("update:modelValue", { ...props.modelValue, text: target.value });
+    const text = target.value;
+    const segments = Array.from(segmenter.segment(text));
+
+    if (segments.length > 32) {
+        // 32文字を超える入力は切り捨てる
+        const truncated = segments
+            .slice(0, 32)
+            .map((s) => s.segment)
+            .join("");
+        target.value = truncated;
+        emit("update:modelValue", { ...props.modelValue, text: truncated });
+    } else {
+        emit("update:modelValue", { ...props.modelValue, text: text });
+    }
 }
 </script>
 
@@ -41,10 +61,12 @@ function updateText(event: Event) {
                 @input="updateText"
                 :class="$style.textarea"
                 placeholder="メッセージを入力"
-                maxlength="32"
             ></textarea>
-            <div :class="$style.charCount">
-                {{ modelValue.text.length }}/32
+            <div
+                :class="$style.charCount"
+                :style="{ color: charCount > 32 ? 'var(--danger-color)' : 'var(--text-muted-color)' }"
+            >
+                {{ charCount }}/32
             </div>
         </div>
     </section>

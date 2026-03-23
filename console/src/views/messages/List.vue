@@ -107,6 +107,10 @@ async function saveChanges() {
                 />
             </div>
 
+            <section :class="$style.description">
+                <p>目安: 16文字で1行、32文字で2行</p>
+            </section>
+
             <button :class="$style.fab" @click="addMessage" type="button" title="追加">
                 <Plus :size="24" />
             </button>
@@ -136,6 +140,10 @@ async function saveChanges() {
     color: var(--text-muted-color);
     font-size: 1rem;
     margin-top: 2rem;
+}
+.description {
+    color: var(--text-muted-color);
+    text-align: center;
 }
 
 .listContainer {

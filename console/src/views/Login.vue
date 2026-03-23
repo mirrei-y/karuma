@@ -22,25 +22,37 @@ function login() {
 
 <template>
     <div :class="$style.page">
-        <NavBar 
-            :title="isLoggedIn ? 'アカウント設定' : 'ログイン'" 
-            :show-back="isLoggedIn" 
-            back-text="設定" 
-            back-to="/" 
+        <NavBar
+            :title="isLoggedIn ? 'アカウント設定' : 'ログイン'"
+            :show-back="isLoggedIn"
+            back-text="設定"
+            back-to="/"
         />
         <main :class="$style.content">
             <section :class="$style.section">
                 <div :class="$style.inputGroup">
                     <label :class="$style.label" for="username">名前</label>
-                    <input id="username" type="text" v-model="username" :class="$style.input" placeholder="例: 管理者" />
+                    <input
+                        id="username"
+                        type="text"
+                        v-model="username"
+                        :class="$style.input"
+                        placeholder="例: 管理者"
+                    />
                 </div>
                 <div :class="$style.inputGroup">
                     <label :class="$style.label" for="passphrase">あいことば</label>
-                    <input id="passphrase" type="text" v-model="passphrase" :class="$style.input" placeholder="あいことば" />
+                    <input
+                        id="passphrase"
+                        type="text"
+                        v-model="passphrase"
+                        :class="$style.input"
+                        placeholder="あいことば"
+                    />
                 </div>
             </section>
             <button :class="$style.loginButton" @click="login">
-                {{ isLoggedIn ? '保存' : 'ログイン' }}
+                {{ isLoggedIn ? "保存" : "ログイン" }}
             </button>
         </main>
     </div>
