@@ -1,0 +1,78 @@
+import { ListView } from "std-widgets.slint";
+import { Line } from "../utils/Line.slint";
+import { Date, Time } from "../types/datetime.slint";
+import { DateText } from "../utils/DateText.slint";
+import { TimeText } from "../utils/TimeText.slint";
+import { AppState } from "../state.slint";
+import { MessageBubble } from "MessageBubble.slint";
+
+export struct Message {
+    date: Date,
+    time: Time,
+    author: string,
+    text: string,
+}
+
+export component MessageList inherits VerticalLayout{
+    in-out property <[Message]> messages;
+
+    vertical-stretch: 1;
+
+    padding-left: 0.5rem;
+
+    ListView {
+        horizontal-scrollbar-policy: always-off;
+        vertical-scrollbar-policy: always-off;
+        viewport-y: -(self.visible-height - self.viewport-height); // NOTE: 常に一番下にスクロールしておく
+
+        for message[index] in root.messages : VerticalLayout {
+            HorizontalLayout {
+                spacing: 0.5rem;
+                padding-top: index == 0 ? 0 : 0.5rem; // NOTE: Slint を許すな
+
+                VerticalLayout {
+                    spacing: 0.25rem;
+
+                    TimeText {
+                        horizontal-stretch: 0;
+
+                        time: message.time;
+                        size: 0.7rem;
+                        text-alignment: TextVerticalAlignment.bottom;
+                        color: AppState.foreground-color-secondary;
+                    }
+                    Text {
+                        horizontal-stretch: 0;
+
+                        vertical-alignment: TextVerticalAlignment.top;
+                        text: message.author;
+                        font-size: 0.7rem;
+                        color: AppState.foreground-color;
+                    }
+                }
+                MessageBubble {
+                    horizontal-stretch: 1; // TODO: 動いてない
+
+                    Text {
+                        vertical-alignment: TextVerticalAlignment.center;
+                        wrap: TextWrap.word-wrap;
+
+                        text: message.text;
+                        color: AppState.foreground-color;
+                        horizontal-stretch: 1;
+                    }
+                }
+            }
+        }
+        // model: [
+        //     { text: "Blue"},
+        //     { text: "Red" },
+        //     { text: "Green" },
+        //     { text: "Yellow" },
+        //     { text: "Black"},
+        //     { text: "White"},
+        //     { text: "Magenta" },
+        //     { text: "Cyan" },
+        // ];
+    }
+}

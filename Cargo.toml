@@ -1,0 +1,32 @@
+[package]
+name = "karuma"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+axum = "0.8.8"
+base64 = "0.22.1"
+chrono = "0.4.44"
+image = "0.25.10"
+lazy_static = "1.5.0"
+mime_guess = "2.0.5"
+reqwest = { version = "0.13.2", features = ["blocking", "json"] }
+rust-embed = "8.11.0"
+serde = { version = "1.0.228", features = ["derive"] }
+slint = "1.14.1"
+tokio = { version = "1.50.0", features = ["rt-multi-thread", "macros", "fs", "rt", "time"] }
+toml = "1.0.7"
+
+[target.armv7-unknown-linux-musleabihf.dependencies]
+slint = { version = "1.14.1", default-features = false, features = ["backend-linuxkms", "renderer-femtovg"] }
+
+[build-dependencies]
+slint-build = "1.14.1"
+
+[profile.release]
+codegen-units = 1
+debug = false
+strip = true
+lto = true

@@ -1,0 +1,16 @@
+import { AppState } from "../state.slint";
+
+export component DatetimeSpan inherits Text {
+    // 文字を大きく表示するかどうか
+    in-out property <bool> is-primary: false;
+    // フォントサイズ
+    in-out property <relative-font-size> size: 1rem;
+    // 文字のアラインメント
+    in-out property <TextVerticalAlignment> alignment: TextVerticalAlignment.bottom;
+
+    horizontal-alignment: TextHorizontalAlignment.left;
+    vertical-alignment: alignment;
+
+    font-size: size * (is-primary ? 1 : 0.8);
+    color: AppState.foreground-color;
+}

@@ -1,0 +1,41 @@
+import { AppState } from "../state.slint";
+import { Date, Time, DateUtil } from "../types/datetime.slint";
+import { DatetimeSpan } from "DatetimeSpan.slint";
+
+export component TimeText inherits HorizontalLayout {
+    // 時刻
+    in-out property <Time> time;
+    // フォントサイズ
+    in-out property <relative-font-size> size: 1rem;
+    // 文字色
+    in-out property <color> color: AppState.foreground-color;
+    // 文字のアラインメント
+    in-out property <TextVerticalAlignment> text-alignment: TextVerticalAlignment.bottom;
+
+    DatetimeSpan {
+        size: root.size;
+        color: root.color;
+        alignment: root.text-alignment;
+        text: root.time.hour;
+        is-primary: true;
+    }
+    DatetimeSpan {
+        size: root.size;
+        color: root.color;
+        alignment: root.text-alignment;
+        text: "時";
+    }
+    DatetimeSpan {
+        size: root.size;
+        color: root.color;
+        alignment: root.text-alignment;
+        text: root.time.minute;
+        is-primary: true;
+    }
+    DatetimeSpan {
+        size: root.size;
+        color: root.color;
+        alignment: root.text-alignment;
+        text: "分";
+    }
+}

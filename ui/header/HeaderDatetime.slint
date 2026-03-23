@@ -1,0 +1,29 @@
+import { HorizontalBox } from "std-widgets.slint";
+import { AppState } from "../state.slint";
+import { Date, Time, DateUtil } from "../types/datetime.slint";
+import { DateText } from "../utils/DateText.slint";
+import { TimeText } from "../utils/TimeText.slint";
+import { DatetimeSpan } from "../utils/DatetimeSpan.slint";
+
+export component HeaderDatetime inherits HorizontalLayout {
+    // 日付
+    in-out property <Date> date;
+    // 時刻
+    in-out property <Time> time;
+
+    DatetimeSpan {
+        width: 1.8rem;
+        font-size: 0.7rem;
+        color: AppState.foreground-color-secondary;
+        text: "現在";
+    }
+    DateText {
+        date: root.date;
+    }
+    Path {
+        width: 0.3rem;
+    }
+    TimeText {
+        time: root.time;
+    }
+}

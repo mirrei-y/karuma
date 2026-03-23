@@ -1,0 +1,130 @@
+import { AppState } from "state.slint";
+import { Date, Time } from "types/datetime.slint";
+import { Line } from "utils/Line.slint";
+import { HeaderDatetime } from "header/HeaderDatetime.slint";
+import { ScheduleRow } from "schedule/ScheduleRow.slint";
+import { MessageList, Message } from "messages/MessageList.slint";
+import { MessageNotFound } from "messages/MessageNotFound.slint";
+
+export component AppWindow inherits Window {
+    title: "Karuma";
+    no-frame: true;
+    full-screen: true;
+    background: AppState.background-color;
+    default-font-family: "BIZ UDPゴシック";
+    default-font-size: 80px;
+    default-font-weight: 200;
+
+    // 今日の日付
+    in property <Date> date: {
+        month: 3,
+        day: 19,
+        dayOfWeek: 6,
+    };
+    // 現在の時刻
+    in property <Time> time: {
+        hour: 1,
+        minute: 0,
+    };
+    // メッセージのリスト
+    in property <[Message]> messages: [
+    ];
+    //     {
+    //         date: {
+    //             month: 3,
+    //             day: 19,
+    //             dayOfWeek: 6,
+    //         },
+    //         time: {
+    //             hour: 12,
+    //             minute: 34,
+    //         },
+    //         author: "まい",
+    //         text: "おはよう！まいは今日行かないよー！",
+    //     },
+    //     {
+    //         date: {
+    //             month: 3,
+    //             day: 19,
+    //             dayOfWeek: 6,
+    //         },
+    //         time: {
+    //             hour: 12,
+    //             minute: 34,
+    //         },
+    //         author: "まい",
+    //         text: "ヘルパーさんへ　朝ごはんの用意を忘れてしまいました。テーブル上のパンを朝ごはんにしてください。",
+    //     },
+    //     {
+    //         date: {
+    //             month: 3,
+    //             day: 19,
+    //             dayOfWeek: 6,
+    //         },
+    //         time: {
+    //             hour: 12,
+    //             minute: 34,
+    //         },
+    //         author: "めい",
+    //         text: "今日はめいが13:30に行きます。",
+    //     },
+    //     {
+    //         date: {
+    //             month: 3,
+    //             day: 19,
+    //             dayOfWeek: 6,
+    //         },
+    //         time: {
+    //             hour: 12,
+    //             minute: 34,
+    //         },
+    //         author: "まい",
+    //         text: "明日3/20(祝)のリハビリは、16:10開始から14:30開始に変更です。",
+    //     }
+    // ];
+
+    in property <bool> is-image-loading: false;
+    in property <image> image;
+
+    callback request-increase-value();
+
+    VerticalLayout {
+        padding: 0.75rem;
+        spacing: 0.5rem;
+
+        HorizontalLayout {
+            alignment: LayoutAlignment.start;
+            padding: 0px;
+            spacing: 0.5rem;
+
+            HeaderDatetime {
+                date: root.date;
+                time: root.time;
+            }
+        }
+        Line {}
+
+        if root.messages.length == 0 : MessageNotFound {
+            is-image-loading: root.is-image-loading;
+            image: root.image;
+        }
+        if root.messages.length != 0 : MessageList {
+            messages: root.messages;
+        }
+        // Line {}
+
+        // VerticalLayout {
+        //     alignment: LayoutAlignment.end;
+        //     spacing: 0.5rem;
+
+        //     ScheduleRow {
+        //         is-future: false;
+        //     }
+        //     ScheduleRow {
+        //         is-future: true;
+        //         font-size: 0.8;
+        //         foreground-color: AppState.foreground-color-secondary;
+        //     }
+        // }
+    }
+}

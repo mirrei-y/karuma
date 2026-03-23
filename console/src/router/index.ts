@@ -1,0 +1,37 @@
+import { createRouter, createWebHistory } from "vue-router";
+import SettingsView from "../views/Settings.vue";
+import MessagesList from "../views/messages/List.vue";
+import LoginView from "../views/Login.vue";
+
+const router = createRouter({
+    history: createWebHistory(import.meta.env.BASE_URL),
+    routes: [
+        {
+            path: "/login",
+            name: "login",
+            component: LoginView,
+        },
+        {
+            path: "/",
+            name: "settings",
+            component: SettingsView,
+            meta: { requiresAuth: true },
+        },
+        {
+            path: "/messages",
+            name: "messages-list",
+            component: MessagesList,
+            meta: { requiresAuth: true },
+        },
+    ],
+});
+
+router.beforeEach((to, _from, next) => {
+    if (to.meta.requiresAuth && !localStorage.getItem("karuma_passphrase")) {
+        next({ name: "login" });
+    } else {
+        next();
+    }
+});
+
+export default router;

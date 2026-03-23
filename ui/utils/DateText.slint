@@ -1,0 +1,55 @@
+import { AppState } from "../state.slint";
+import { Date, Time, DateUtil } from "../types/datetime.slint";
+import { DatetimeSpan } from "DatetimeSpan.slint";
+
+export component DateText inherits HorizontalLayout {
+    // 日付
+    in-out property <Date> date;
+    // フォントサイズ
+    in-out property <relative-font-size> size: 1rem;
+    // 文字色
+    in-out property <color> color: AppState.foreground-color;
+    // 文字のアラインメント
+    in-out property <TextVerticalAlignment> text-alignment: TextVerticalAlignment.bottom;
+
+    DatetimeSpan {
+        size: root.size;
+        color: root.color;
+        alignment: root.text-alignment;
+        text: root.date.month;
+        is-primary: true;
+    }
+    DatetimeSpan {
+        size: root.size;
+        color: root.color;
+        alignment: root.text-alignment;
+        text: "月";
+    }
+    DatetimeSpan {
+        size: root.size;
+        color: root.color;
+        alignment: root.text-alignment;
+        text: root.date.day;
+        is-primary: true;
+    }
+    DatetimeSpan {
+        size: root.size;
+        color: root.color;
+        alignment: root.text-alignment;
+        text: "日 (";
+    }
+    DatetimeSpan {
+        size: root.size;
+        color:  root.date.dayOfWeek == 5 ? #6666ff :
+                root.date.dayOfWeek == 6 ? #ff6666 :
+                root.color;
+        alignment: root.text-alignment;
+        text: DateUtil.weeks[root.date.dayOfWeek];
+    }
+    DatetimeSpan {
+        size: root.size;
+        color: root.color;
+        alignment: root.text-alignment;
+        text: ")";
+    }
+}

@@ -1,0 +1,39 @@
+export component MessageBubble inherits HorizontalLayout {
+    Path {
+        horizontal-stretch: 0;
+
+        width: 0.666rem;
+        height: 100%;
+        fill: #80808040;
+
+        MoveTo {
+            x: 100%;
+            y: 0%;
+        }
+        LineTo {
+            x: 0%;
+            y: 50%;
+        }
+        LineTo {
+            x: 100%;
+            y: 100%;
+        }
+        LineTo {
+            x: 100%;
+            y: 0%;
+        }
+        Close {}
+    }
+    Rectangle {
+        horizontal-stretch: 1;
+
+        background: #80808040;
+        border-radius: 0.5rem;
+
+        HorizontalLayout {
+            padding: 0.5rem;
+
+            @children
+        }
+    }
+}
