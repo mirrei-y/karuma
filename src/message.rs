@@ -1,9 +1,10 @@
 use std::fs;
 use std::path::Path;
 use std::sync::Mutex;
+use std::sync::atomic::{AtomicU64, Ordering};
 use serde::{Deserialize, Serialize};
 use lazy_static::lazy_static;
-use crate::constants::{DATA_DIR, ARCHIVES_DIR, MESSAGES_FILE};
+use crate::constants::{DATA_DIR, ARCHIVES_DIR, MESSAGES_FILE, SAVE_DEBOUNCE_SECS};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct MessageData {
@@ -24,6 +25,9 @@ struct MessageFile {
 
 lazy_static! {
     static ref GLOBAL_MESSAGES: Mutex<Vec<MessageData>> = Mutex::new(Vec::new());
+
+    /// set_messages が呼ばれた UNIX タイムスタンプ（ナノ秒）。0 は未スケジュール。
+    static ref PENDING_SAVE_AT: AtomicU64 = AtomicU64::new(0);
 }
 
 /// 現在メモリに保持されているメッセージリストを取得します。
@@ -35,7 +39,8 @@ pub fn get_messages() -> Vec<MessageData> {
     }
 }
 
-/// 新しいメッセージリストを保存し、UI スレッドに更新を要求します。
+/// 新しいメッセージリストをメモリに反映し、UI スレッドに即時更新を要求します。
+/// ディスクへの書き込みは SAVE_DEBOUNCE_SECS 秒後に一度だけ行われます。
 pub fn set_messages(
     window_weak: slint::Weak<crate::AppWindow>,
     messages: Vec<MessageData>,
@@ -44,7 +49,7 @@ pub fn set_messages(
         *global = messages.clone();
     }
 
-    save_messages(&messages);
+    schedule_save();
 
     crate::ui::renew_message(window_weak, messages);
 }
@@ -100,20 +105,62 @@ pub fn load_messages() -> Vec<MessageData> {
     Vec::new()
 }
 
-/// 指定されたメッセージリストを保存します。
-fn save_messages(messages: &[MessageData]) {
-    if let Err(e) = fs::create_dir_all(DATA_DIR) {
-        eprintln!("Failed to create data directory: {}", e);
-        return;
+/// 保存をスケジュールします。
+///
+/// 既にスケジュール済みの場合はタイムスタンプを更新します（debounce）。
+/// 初回スケジュール時のみ tokio タスクを起動します。
+fn schedule_save() {
+    /// 現在時刻を UNIX タイムスタンプ（秒）で返します。
+    fn now_secs() -> u64 {
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs()
+    }
+    /// 指定されたメッセージリストをディスクに書き込みます。
+    fn save_messages(messages: &[MessageData]) {
+        if let Err(e) = fs::create_dir_all(DATA_DIR) {
+            eprintln!("Failed to create data directory: {}", e);
+            return;
+        }
+
+        let file_data = MessageFile { messages: messages.to_vec() };
+        match toml::to_string(&file_data) {
+            Ok(content) => {
+                if let Err(e) = fs::write(MESSAGES_FILE, content) {
+                    eprintln!("An error occurred while saving messages: {}", e);
+                }
+            }
+            Err(e) => eprintln!("Failed to serialize messages: {}", e),
+        }
     }
 
-    let file_data = MessageFile { messages: messages.to_vec() };
-    match toml::to_string(&file_data) {
-        Ok(content) => {
-            if let Err(e) = fs::write(MESSAGES_FILE, content) {
-                eprintln!("An error occurred while saving messages: {}", e);
+    let deadline = now_secs() + SAVE_DEBOUNCE_SECS;
+    let prev = PENDING_SAVE_AT.swap(deadline, Ordering::Relaxed);
+
+    // prev == 0 のときのみタスクを起動（既に起動中なら swap で deadline を更新済み）
+    if prev == 0 {
+        tokio::spawn(async {
+            loop {
+                let deadline = PENDING_SAVE_AT.load(Ordering::Relaxed);
+                let now = now_secs();
+
+                if deadline == 0 {
+                    // キャンセルされた（通常は発生しない）
+                    break;
+                }
+
+                if now >= deadline {
+                    // デッドライン到達：フラグをクリアしてから保存
+                    PENDING_SAVE_AT.store(0, Ordering::Relaxed);
+                    let messages = get_messages();
+                    save_messages(&messages);
+                    break;
+                }
+
+                // デッドラインまで待機（1秒刻みで再チェックし debounce に追従）
+                tokio::time::sleep(std::time::Duration::from_secs(1)).await;
             }
-        }
-        Err(e) => eprintln!("Failed to serialize messages: {}", e),
+        });
     }
 }
