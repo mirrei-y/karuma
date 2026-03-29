@@ -76,6 +76,65 @@ pub fn archive_messages(window_weak: slint::Weak<crate::AppWindow>) {
     crate::ui::renew_message(window_weak, vec![]);
 }
 
+/// アーカイブファイルの一覧（日付文字列）を返します。
+///
+/// 例: `["20250101", "20250102"]`（降順）
+pub fn list_archives() -> Vec<String> {
+    let dir = Path::new(ARCHIVES_DIR);
+    if !dir.exists() {
+        return Vec::new();
+    }
+
+    let mut dates: Vec<String> = match fs::read_dir(dir) {
+        Ok(entries) => entries
+            .filter_map(|entry| {
+                let entry = entry.ok()?;
+                let name = entry.file_name().into_string().ok()?;
+                // "messages-YYYYMMDD.toml" → "YYYYMMDD"
+                let date = name
+                    .strip_prefix("messages-")?
+                    .strip_suffix(".toml")?
+                    .to_string();
+                Some(date)
+            })
+            .collect(),
+        Err(e) => {
+            eprintln!("Failed to read archives directory: {}", e);
+            Vec::new()
+        }
+    };
+
+    dates.sort_by(|a, b| b.cmp(a)); // 降順
+    dates
+}
+
+/// 指定された日付のアーカイブを読み込みます。
+///
+/// `date` は `"YYYYMMDD"` 形式の文字列です。
+/// 見つからない・パース失敗の場合は `None` を返します。
+pub fn load_archive(date: &str) -> Option<Vec<MessageData>> {
+    let path_str = format!("{}/messages-{}.toml", ARCHIVES_DIR, date);
+    let path = Path::new(&path_str);
+
+    if !path.exists() {
+        return None;
+    }
+
+    match fs::read_to_string(path) {
+        Ok(content) => match toml::from_str::<MessageFile>(&content) {
+            Ok(parsed) => Some(parsed.messages),
+            Err(e) => {
+                eprintln!("Failed to parse archive {}: {}", date, e);
+                None
+            }
+        },
+        Err(e) => {
+            eprintln!("Failed to read archive {}: {}", date, e);
+            None
+        }
+    }
+}
+
 /// 保存されたメッセージリストを読み込みます。
 pub fn load_messages() -> Vec<MessageData> {
     if let Err(e) = fs::create_dir_all(DATA_DIR) {

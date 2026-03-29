@@ -1,7 +1,7 @@
 mod console;
 
 use axum::{
-    extract::Request,
+    extract::{Path, Request},
     http::StatusCode,
     middleware::{self, Next},
     response::Response,
@@ -41,6 +41,8 @@ pub async fn run_server(window_weak: slint::Weak<crate::AppWindow>) -> std::io::
     let api_routes = Router::new()
         .route("/config", get(get_config).post(update_config))
         .route("/messages", get(get_messages).put(update_messages))
+        .route("/messages/archives", get(get_archive_list))
+        .route("/messages/archives/{date}", get(get_archive))
         .layer(middleware::from_fn(auth_middleware))
         .with_state(window_weak.clone());
 
@@ -63,6 +65,19 @@ async fn update_messages(
 ) -> StatusCode {
     crate::message::set_messages(window_weak, payload);
     StatusCode::NO_CONTENT
+}
+
+async fn get_archive_list() -> Json<Vec<String>> {
+    Json(crate::message::list_archives())
+}
+
+async fn get_archive(
+    Path(date): Path<String>,
+) -> Result<Json<Vec<crate::message::MessageData>>, StatusCode> {
+    match crate::message::load_archive(&date) {
+        Some(messages) => Ok(Json(messages)),
+        None => Err(StatusCode::NOT_FOUND),
+    }
 }
 
 async fn get_config() -> Json<AppConfigPayload> {

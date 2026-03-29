@@ -14,6 +14,12 @@ import NavBar from "../components/NavBar.vue";
                 </div>
                 <ChevronRight :class="$style.chevron" :size="20" />
             </RouterLink>
+            <RouterLink to="/messages/archives" :class="$style.button">
+                <div>
+                    <span :class="$style.label">過去のメッセージを見る</span>
+                </div>
+                <ChevronRight :class="$style.chevron" :size="20" />
+            </RouterLink>
             <RouterLink to="/login" :class="$style.button">
                 <div>
                     <span :class="$style.label">名前を変える</span>

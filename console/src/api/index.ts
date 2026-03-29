@@ -52,3 +52,34 @@ export async function updateMessages(messages: MessageData[]): Promise<void> {
         throw new Error("メッセージの更新に失敗しました。");
     }
 }
+
+/**
+ * アーカイブの日付一覧を取得します。
+ * @returns "YYYYMMDD" 形式の日付文字列の配列（降順）
+ */
+export async function getArchiveList(): Promise<string[]> {
+    const response = await fetch("/api/messages/archives", {
+        headers: getHeaders(),
+    });
+    if (!response.ok) {
+        handleResponseError(response);
+        throw new Error("アーカイブ一覧の取得に失敗しました。");
+    }
+    return response.json();
+}
+
+/**
+ * 指定された日付のアーカイブを取得します。
+ * @param date "YYYYMMDD" 形式の日付文字列
+ * @returns メッセージの配列
+ */
+export async function getArchive(date: string): Promise<MessageData[]> {
+    const response = await fetch(`/api/messages/archives/${date}`, {
+        headers: getHeaders(),
+    });
+    if (!response.ok) {
+        handleResponseError(response);
+        throw new Error("アーカイブの取得に失敗しました。");
+    }
+    return response.json();
+}

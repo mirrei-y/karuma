@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import SettingsView from "../views/Settings.vue";
 import MessagesList from "../views/messages/List.vue";
+import MessagesArchives from "../views/messages/Archives.vue";
 import LoginView from "../views/Login.vue";
 
 const router = createRouter({
@@ -21,6 +22,12 @@ const router = createRouter({
             path: "/messages",
             name: "messages-list",
             component: MessagesList,
+            meta: { requiresAuth: true },
+        },
+        {
+            path: "/messages/archives",
+            name: "messages-archives",
+            component: MessagesArchives,
             meta: { requiresAuth: true },
         },
     ],
