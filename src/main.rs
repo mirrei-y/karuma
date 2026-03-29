@@ -2,6 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod catapi;
+mod constants;
 mod message;
 mod server;
 mod ui;
@@ -67,9 +68,25 @@ async fn main() -> Result<(), Box<dyn Error>> {
     });
     ui::renew_datetime(window.as_weak());
 
-    // TODO: 起動時に猫の画像を読み込む
-    // window.set_is_image_loading(true);
-    // tokio::spawn(ui::renew_cat_image(window.as_weak()));
+    // NOTE: 起動時に猫の画像を読み込み、以降30分ごとに入れ替える
+    let window_weak_cat = window.as_weak();
+    tokio::spawn(async move {
+        let interval_mins = constants::CAT_FETCH_INTERVAL as u64;
+        let mut ticker = tokio::time::interval(std::time::Duration::from_mins(interval_mins));
+        loop {
+            ticker.tick().await;
+            let _ = slint::invoke_from_event_loop({
+                let w = window_weak_cat.clone();
+                move || {
+                    if let Some(window) = w.upgrade() {
+                        window.set_is_image_loading(true);
+                        window.set_is_image_error(false);
+                    }
+                }
+            });
+            ui::renew_cat_image(window_weak_cat.clone()).await;
+        }
+    });
 
     // let timer = Timer::default();
     // timer.start(TimerMode::Repeated, std::time::Duration::from_millis(200), {

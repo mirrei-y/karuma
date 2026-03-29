@@ -84,6 +84,7 @@ export component AppWindow inherits Window {
     // ];
 
     in property <bool> is-image-loading: false;
+    in property <bool> is-image-error: false;
     in property <image> image;
 
     callback request-increase-value();
@@ -106,6 +107,7 @@ export component AppWindow inherits Window {
 
         if root.messages.length == 0 : MessageNotFound {
             is-image-loading: root.is-image-loading;
+            is-image-error: root.is-image-error;
             image: root.image;
         }
         if root.messages.length != 0 : MessageList {

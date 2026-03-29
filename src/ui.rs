@@ -25,18 +25,29 @@ pub fn renew_datetime(window_weak: slint::Weak<AppWindow>) {
 
 /// The Cat API からランダムな猫の画像を取得し、UI スレッドに更新を要求します。
 pub async fn renew_cat_image(window_weak: slint::Weak<AppWindow>) {
-    if let Ok((width, height, raw_pixels)) = fetch_cat_image().await {
-        let _ = slint::invoke_from_event_loop(move || {
-            let window = window_weak.unwrap();
-            let buffer = slint::SharedPixelBuffer::<slint::Rgb8Pixel>::clone_from_slice(
-                &raw_pixels,
-                width,
-                height,
-            );
-            let image = slint::Image::from_rgb8(buffer);
-            window.set_image(image);
-            window.set_is_image_loading(false);
-        });
+    match fetch_cat_image().await {
+        Ok((width, height, raw_pixels)) => {
+            let _ = slint::invoke_from_event_loop(move || {
+                let window = window_weak.unwrap();
+                let buffer = slint::SharedPixelBuffer::<slint::Rgb8Pixel>::clone_from_slice(
+                    &raw_pixels,
+                    width,
+                    height,
+                );
+                let image = slint::Image::from_rgb8(buffer);
+                window.set_image(image);
+                window.set_is_image_loading(false);
+                window.set_is_image_error(false);
+            });
+        }
+        Err(e) => {
+            eprintln!("猫画像の取得に失敗しました: {}", e);
+            let _ = slint::invoke_from_event_loop(move || {
+                let window = window_weak.unwrap();
+                window.set_is_image_loading(false);
+                window.set_is_image_error(true);
+            });
+        }
     }
 }
 

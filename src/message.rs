@@ -3,10 +3,7 @@ use std::path::Path;
 use std::sync::Mutex;
 use serde::{Deserialize, Serialize};
 use lazy_static::lazy_static;
-
-const DATA_DIR: &str = "data";
-const ARCHIVES_DIR: &str = "archives";
-const MESSAGES_FILE: &str = "data/messages.toml";
+use crate::constants::{DATA_DIR, ARCHIVES_DIR, MESSAGES_FILE};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct MessageData {
