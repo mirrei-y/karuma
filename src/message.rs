@@ -4,6 +4,10 @@ use std::sync::Mutex;
 use serde::{Deserialize, Serialize};
 use lazy_static::lazy_static;
 
+const DATA_DIR: &str = "data";
+const ARCHIVES_DIR: &str = "archives";
+const MESSAGES_FILE: &str = "data/messages.toml";
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct MessageData {
     pub month: i32,
@@ -50,11 +54,19 @@ pub fn set_messages(
 
 /// メッセージデータをアーカイブ化し、メモリをクリアします。
 pub fn archive_messages(window_weak: slint::Weak<crate::AppWindow>) {
+    if let Err(e) = fs::create_dir_all(ARCHIVES_DIR) {
+        eprintln!("Failed to create archives directory: {}", e);
+        return;
+    }
+
     // 午前3時実行を想定し、数時間引いて前日の日付をアーカイブ名とする
     let archive_date = (chrono::Local::now() - chrono::Duration::hours(4)).date_naive();
-    let archive_name = format!("archives/messages-{}.toml", archive_date.format("%Y%m%d"));
+    let archive_name = format!("{}/messages-{}.toml", ARCHIVES_DIR, archive_date.format("%Y%m%d"));
 
-    let _ = fs::rename("data/messages.toml", archive_name);
+    if let Err(e) = fs::rename(MESSAGES_FILE, &archive_name) {
+        eprintln!("Failed to archive messages to {}: {}", archive_name, e);
+        return;
+    }
 
     if let Ok(mut global) = GLOBAL_MESSAGES.lock() {
         global.clear();
@@ -64,17 +76,27 @@ pub fn archive_messages(window_weak: slint::Weak<crate::AppWindow>) {
 
 /// 保存されたメッセージリストを読み込みます。
 pub fn load_messages() -> Vec<MessageData> {
-    let path = Path::new("data/messages.toml");
+    if let Err(e) = fs::create_dir_all(DATA_DIR) {
+        eprintln!("Failed to create data directory: {}", e);
+        return Vec::new();
+    }
+
+    let path = Path::new(MESSAGES_FILE);
     if path.exists() {
-        if let Ok(content) = fs::read_to_string(path) {
-            if let Ok(parsed) = toml::from_str::<MessageFile>(&content) {
-                if let Ok(mut global) = GLOBAL_MESSAGES.lock() {
-                    *global = parsed.messages.clone();
+        match fs::read_to_string(path) {
+            Ok(content) => match toml::from_str::<MessageFile>(&content) {
+                Ok(parsed) => {
+                    if let Ok(mut global) = GLOBAL_MESSAGES.lock() {
+                        *global = parsed.messages.clone();
+                    }
+                    return parsed.messages;
                 }
-                return parsed.messages;
-            }
+                Err(e) => eprintln!("Failed to parse messages file: {}", e),
+            },
+            Err(e) => eprintln!("Failed to read messages file: {}", e),
         }
     }
+
     if let Ok(mut global) = GLOBAL_MESSAGES.lock() {
         *global = Vec::new();
     }
@@ -83,9 +105,18 @@ pub fn load_messages() -> Vec<MessageData> {
 
 /// 指定されたメッセージリストを保存します。
 fn save_messages(messages: &[MessageData]) {
+    if let Err(e) = fs::create_dir_all(DATA_DIR) {
+        eprintln!("Failed to create data directory: {}", e);
+        return;
+    }
+
     let file_data = MessageFile { messages: messages.to_vec() };
-    if let Ok(content) = toml::to_string(&file_data) {
-        let _ = fs::write("data/messages.toml", content);
+    match toml::to_string(&file_data) {
+        Ok(content) => {
+            if let Err(e) = fs::write(MESSAGES_FILE, content) {
+                eprintln!("An error occurred while saving messages: {}", e);
+            }
+        }
+        Err(e) => eprintln!("Failed to serialize messages: {}", e),
     }
 }
-
