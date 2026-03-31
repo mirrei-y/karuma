@@ -20,13 +20,6 @@ export component MessageNotFound inherits VerticalLayout {
         font-size: 1rem;
         color: AppState.foreground-color;
     }
-    if !is-image-error : Text {
-        vertical-stretch: 0;
-        horizontal-alignment: TextHorizontalAlignment.center;
-        text: "今日の一枚はこちら！";
-        font-size: 0.8rem;
-        color: AppState.foreground-color;
-    }
     VerticalLayout {
         vertical-stretch: 1; // TODO: 動いてない
 
@@ -39,7 +32,7 @@ export component MessageNotFound inherits VerticalLayout {
     if !is-image-error : Text {
         vertical-stretch: 0;
         horizontal-alignment: TextHorizontalAlignment.center;
-        text: "不定期で入れ替わります。";
+        text: "画像は不定期で入れ替わります。";
         font-size: 0.8rem;
         color: AppState.foreground-color-secondary;
     }
