@@ -82,7 +82,7 @@ onUnmounted(() => {
                 <ImageUp :class="$style.icon" :size="32" />
                 <div>
                     <span :class="$style.title">写真を投稿する</span>
-                    <span :class="$style.description">新しい写真を投稿できます</span>
+                    <span :class="$style.description">新しい「今日の一枚」を投稿できます</span>
                 </div>
                 <ChevronRight :size="20" />
             </RouterLink>
@@ -91,7 +91,7 @@ onUnmounted(() => {
                 <Archive :class="$style.icon" :size="32" />
                 <div>
                     <span :class="$style.title">過去のメッセージを見る</span>
-                    <span :class="$style.description">1日以上経過したメッセージを見ることができます</span>
+                    <span :class="$style.description">1日以上経過したメッセージを見ます</span>
                 </div>
                 <ChevronRight :size="20" />
             </RouterLink>
@@ -100,7 +100,7 @@ onUnmounted(() => {
                 <UserRoundPen :class="$style.icon" :size="32" />
                 <div>
                     <span :class="$style.title">名前を変える</span>
-                    <span :class="$style.description">メッセージの投稿者名やログイン情報を変更できます</span>
+                    <span :class="$style.description">ユーザー名やログイン情報を変更します</span>
                 </div>
                 <ChevronRight :size="20" />
             </RouterLink>
