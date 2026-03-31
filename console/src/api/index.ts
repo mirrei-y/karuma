@@ -100,6 +100,23 @@ export async function getPictures(): Promise<PictureEntry[]> {
 }
 
 /**
+ * 現在の画面スナップショットを Blob URL として取得します。
+ * @returns PNG の object URL
+ */
+export async function getSnapshot(): Promise<string> {
+    const headers = getHeaders() as Record<string, string>;
+    const response = await fetch("/api/snapshot", {
+        headers: { Authorization: headers["Authorization"] },
+    });
+    if (!response.ok) {
+        handleResponseError(response);
+        throw new Error("スナップショットの取得に失敗しました。");
+    }
+    const blob = await response.blob();
+    return URL.createObjectURL(blob);
+}
+
+/**
  * 写真と説明文を投稿します。
  * @param image 画像ファイル
  * @param description 説明文

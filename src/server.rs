@@ -1,5 +1,6 @@
 mod console;
 pub mod picture;
+pub mod snapshot;
 
 use axum::{
     extract::{Path, Request},
@@ -45,6 +46,7 @@ pub async fn run_server(window_weak: slint::Weak<crate::AppWindow>) -> std::io::
         .route("/messages/archives", get(get_archive_list))
         .route("/messages/archives/{date}", get(get_archive))
         .route("/pictures", get(picture::list_pictures).post(picture::upload_picture))
+        .route("/snapshot", get(snapshot::get_snapshot))
         .layer(middleware::from_fn(auth_middleware))
         .with_state(window_weak.clone());
 
