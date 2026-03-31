@@ -5,6 +5,9 @@ import type { PictureEntry } from "../types";
 import { getPictures, uploadPicture } from "../api";
 import NavBar from "../components/NavBar.vue";
 
+const MAX_SIZE = 1000;
+const WEBP_QUALITY = 0.85;
+
 const pictures = ref<PictureEntry[]>([]);
 const isLoading = ref(true);
 const isUploading = ref(false);
@@ -35,6 +38,57 @@ function onFileChange(event: Event) {
     errorMessage.value = "";
 }
 
+/**
+ * Canvas API を使い、画像を最大 MAX_SIZE x MAX_SIZE にリサイズして
+ * WebP Blob に変換して返します。
+ */
+function compressImage(file: File): Promise<Blob> {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        const objectUrl = URL.createObjectURL(file);
+
+        img.onload = () => {
+            URL.revokeObjectURL(objectUrl);
+
+            let { width, height } = img;
+            if (width > MAX_SIZE || height > MAX_SIZE) {
+                if (width >= height) {
+                    height = Math.round((height / width) * MAX_SIZE);
+                    width = MAX_SIZE;
+                } else {
+                    width = Math.round((width / height) * MAX_SIZE);
+                    height = MAX_SIZE;
+                }
+            }
+
+            const canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext("2d")!;
+            ctx.drawImage(img, 0, 0, width, height);
+
+            canvas.toBlob(
+                (blob) => {
+                    if (blob) {
+                        resolve(blob);
+                    } else {
+                        reject(new Error("WebP への変換に失敗しました"));
+                    }
+                },
+                "image/webp",
+                WEBP_QUALITY,
+            );
+        };
+
+        img.onerror = () => {
+            URL.revokeObjectURL(objectUrl);
+            reject(new Error("画像の読み込みに失敗しました"));
+        };
+
+        img.src = objectUrl;
+    });
+}
+
 async function submit() {
     if (!selectedFile.value) {
         errorMessage.value = "写真を選択してください。";
@@ -43,7 +97,8 @@ async function submit() {
     isUploading.value = true;
     errorMessage.value = "";
     try {
-        await uploadPicture(selectedFile.value, description.value);
+        const blob = await compressImage(selectedFile.value);
+        await uploadPicture(blob, description.value);
         // フォームをリセット
         selectedFile.value = null;
         if (previewUrl.value) {
@@ -53,9 +108,12 @@ async function submit() {
         description.value = "";
         // 一覧を更新
         pictures.value = await getPictures();
-    } catch (e) {
+    } catch (e: any) {
         console.error(e);
-        errorMessage.value = "投稿に失敗しました。";
+
+        // NOTE: e は基本 Error オブジェクトだが、もしそうでないときのために、最初に汎用メッセージを書き込んでおく
+        errorMessage.value = "投稿に失敗しました (不明なエラー)";
+        errorMessage.value = "投稿に失敗しました: " + e.toString();
     } finally {
         isUploading.value = false;
     }

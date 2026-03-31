@@ -12,6 +12,13 @@ use tokio::fs;
 
 use crate::constants::{PICTURE_RETENTION_DAYS, PICTURES_DIR};
 
+/// WebP のマジックバイトを確認します。
+fn is_webp(bytes: &[u8]) -> bool {
+    bytes.len() >= 12
+        && &bytes[0..4] == b"RIFF"
+        && &bytes[8..12] == b"WEBP"
+}
+
 #[derive(Serialize)]
 pub struct PictureEntry {
     pub id: String,
@@ -110,16 +117,12 @@ pub async fn upload_picture(mut multipart: Multipart) -> Result<StatusCode, Stat
         }
     }
 
-    let raw_bytes = image_bytes.ok_or(StatusCode::BAD_REQUEST)?;
+    let webp_bytes = image_bytes.ok_or(StatusCode::BAD_REQUEST)?;
 
-    // 受け取った画像を WebP に変換して保存
-    let dynamic_image =
-        image::load_from_memory(&raw_bytes).map_err(|_| StatusCode::UNPROCESSABLE_ENTITY)?;
-    let dynamic_image = if dynamic_image.width() <= 1000 && dynamic_image.height() <= 1000 {
-        dynamic_image
-    } else {
-        dynamic_image.resize_to_fill(1000, 1000, image::imageops::FilterType::Lanczos3)
-    };
+    // クライアント側で WebP に変換済みであることを確認
+    if !is_webp(&webp_bytes) {
+        return Err(StatusCode::UNPROCESSABLE_ENTITY);
+    }
 
     let date_str = Local::now().format("%Y%m%d").to_string();
 
@@ -136,19 +139,6 @@ pub async fn upload_picture(mut multipart: Multipart) -> Result<StatusCode, Stat
         }
     }
     let id = format!("{}{:04}", prefix, count);
-
-    // WebP エンコード
-    let mut webp_bytes: Vec<u8> = Vec::new();
-    let encoder = image::codecs::webp::WebPEncoder::new_lossless(&mut webp_bytes);
-    let rgba = dynamic_image.to_rgba8();
-    encoder
-        .encode(
-            rgba.as_raw(),
-            rgba.width(),
-            rgba.height(),
-            image::ExtendedColorType::Rgba8,
-        )
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     fs::write(dir.join(format!("{}.webp", id)), &webp_bytes)
         .await
