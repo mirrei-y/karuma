@@ -3,8 +3,10 @@ import { Date, Time } from "types/datetime.slint";
 import { Line } from "utils/Line.slint";
 import { HeaderDatetime } from "header/HeaderDatetime.slint";
 import { ScheduleRow } from "schedule/ScheduleRow.slint";
+import { ScheduleList } from "schedule/ScheduleList.slint";
 import { MessageList, Message } from "messages/MessageList.slint";
 import { MessageNotFound } from "messages/MessageNotFound.slint";
+import { PictureView } from "picture/PictureView.slint";
 
 export component AppWindow inherits Window {
     title: "Karuma";
@@ -86,6 +88,10 @@ export component AppWindow inherits Window {
     in property <bool> is-image-loading: false;
     in property <bool> is-image-error: false;
     in property <image> image;
+    // 投稿写真モードのとき true（false のときは catAPI 猫画像）
+    in property <bool> picture-mode: false;
+    // 投稿写真の説明文
+    in property <string> picture-description: "";
 
     callback request-increase-value();
 
@@ -105,13 +111,43 @@ export component AppWindow inherits Window {
         }
         Line {}
 
-        if root.messages.length == 0 : MessageNotFound {
-            is-image-loading: root.is-image-loading;
-            is-image-error: root.is-image-error;
-            image: root.image;
-        }
-        if root.messages.length != 0 : MessageList {
-            messages: root.messages;
+        Rectangle {
+            property <int> active-page: 1;
+            property <int> page-count: 2; // ここを増やせば3つ以上に対応できます
+
+            Timer {
+                interval: 30s;
+                running: true;
+                triggered => {
+                    parent.active-page += 1;
+                    if (parent.active-page >= parent.page-count) {
+                        parent.active-page = 0;
+                    }
+                }
+            }
+
+            Rectangle {
+                opacity: parent.active-page == 0 ? 1.0 : 0.0;
+                animate opacity { duration: 500ms; }
+
+                if root.messages.length == 0 : MessageNotFound {}
+                if root.messages.length != 0 : MessageList {
+                    messages: root.messages;
+                }
+            }
+
+            Rectangle {
+                opacity: parent.active-page == 1 ? 1.0 : 0.0;
+                animate opacity { duration: 500ms; }
+
+                PictureView {
+                    is-image-loading: root.is-image-loading;
+                    is-image-error: root.is-image-error;
+                    image: root.image;
+                    picture-mode: root.picture-mode;
+                    picture-description: root.picture-description;
+                }
+            }
         }
         // Line {}
 

@@ -8,3 +8,9 @@ export interface MessageData {
     author: string;
     text: string;
 }
+
+/** 写真エントリ */
+export interface PictureEntry {
+    id: string;
+    description: string;
+}

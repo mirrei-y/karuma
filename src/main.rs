@@ -7,10 +7,7 @@ mod message;
 mod server;
 mod ui;
 
-use std::{error::Error, rc::Rc};
-
-use chrono::{Datelike, Local, Timelike};
-use slint::{Image, ModelRc, SharedString, Timer, TimerMode, VecModel};
+use std::error::Error;
 
 slint::include_modules!();
 
@@ -24,6 +21,23 @@ async fn main() -> Result<(), Box<dyn Error>> {
     tokio::spawn(async move {
         if let Err(e) = server::run_server(window_weak_server).await {
             eprintln!("API server error: {}", e);
+        }
+    });
+
+    // NOTE: 毎日午前3時に期限切れ写真を削除する
+    tokio::spawn(async move {
+        loop {
+            let now = chrono::Local::now();
+            let mut next_3am = now.date_naive().and_hms_opt(3, 0, 0).unwrap();
+            if now.time() >= chrono::NaiveTime::from_hms_opt(3, 0, 0).unwrap() {
+                next_3am += chrono::Duration::days(1);
+            }
+            let next_3am_tz = next_3am.and_local_timezone(chrono::Local).unwrap();
+            let delay = (next_3am_tz - now)
+                .to_std()
+                .unwrap_or(std::time::Duration::from_secs(0));
+            tokio::time::sleep(delay).await;
+            server::picture::cleanup_old_pictures().await;
         }
     });
 
@@ -68,15 +82,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
     });
     ui::renew_datetime(window.as_weak());
 
-    // NOTE: 起動時に猫の画像を読み込み、以降30分ごとに入れ替える
-    let window_weak_cat = window.as_weak();
+    // NOTE: 起動時に画像を読み込み、以降30分ごとに入れ替える
+    let window_weak_pic = window.as_weak();
     tokio::spawn(async move {
-        let interval_mins = constants::CAT_FETCH_INTERVAL as u64;
+        let interval_mins = constants::PICTURE_SWITCH_INTERVAL as u64;
         let mut ticker = tokio::time::interval(std::time::Duration::from_mins(interval_mins));
         loop {
             ticker.tick().await;
             let _ = slint::invoke_from_event_loop({
-                let w = window_weak_cat.clone();
+                let w = window_weak_pic.clone();
                 move || {
                     if let Some(window) = w.upgrade() {
                         window.set_is_image_loading(true);
@@ -84,7 +98,22 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     }
                 }
             });
-            ui::renew_cat_image(window_weak_cat.clone()).await;
+
+            // 投稿写真が存在する場合は 50% の確率でそちらを表示する
+            let use_user_picture = (chrono::Local::now().timestamp() % 2) == 0;
+            if !use_user_picture || !ui::renew_user_picture(window_weak_pic.clone()).await {
+                // 投稿写真がなかった場合は catAPI にフォールバック
+                let _ = slint::invoke_from_event_loop({
+                    let w = window_weak_pic.clone();
+                    move || {
+                        if let Some(window) = w.upgrade() {
+                            window.set_picture_mode(false);
+                            window.set_picture_description(slint::SharedString::from(""));
+                        }
+                    }
+                });
+                ui::renew_cat_image(window_weak_pic.clone()).await;
+            }
         }
     });
 

@@ -3,6 +3,7 @@ import SettingsView from "../views/Settings.vue";
 import MessagesList from "../views/messages/List.vue";
 import MessagesArchives from "../views/messages/Archives.vue";
 import LoginView from "../views/Login.vue";
+import PicturesView from "../views/Pictures.vue";
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -28,6 +29,12 @@ const router = createRouter({
             path: "/messages/archives",
             name: "messages-archives",
             component: MessagesArchives,
+            meta: { requiresAuth: true },
+        },
+        {
+            path: "/pictures",
+            name: "pictures",
+            component: PicturesView,
             meta: { requiresAuth: true },
         },
     ],

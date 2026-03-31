@@ -1,0 +1,16 @@
+import { ScheduleRow } from "ScheduleRow.slint";
+import { AppState } from "../state.slint";
+
+export component ScheduleList inherits VerticalLayout {
+    alignment: LayoutAlignment.start;
+    spacing: 1rem;
+
+    ScheduleRow {
+        is-future: false;
+    }
+    ScheduleRow {
+        is-future: true;
+        font-size: 0.8;
+        foreground-color: AppState.foreground-color-secondary;
+    }
+}

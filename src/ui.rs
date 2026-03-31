@@ -1,5 +1,6 @@
 use chrono::{Datelike, Local, Timelike};
 use crate::catapi::fetch_cat_image;
+use crate::constants::PICTURES_DIR;
 use crate::{Date, Time, AppWindow};
 
 fn convert_chrono_datetime(datetime: chrono::DateTime<chrono::Local>) -> (Date, Time) {
@@ -49,6 +50,74 @@ pub async fn renew_cat_image(window_weak: slint::Weak<AppWindow>) {
             });
         }
     }
+}
+
+/// 投稿写真をランダムに1枚選んで UI スレッドに更新を要求します。
+/// 投稿写真が1枚もない場合は false を返します。
+pub async fn renew_user_picture(window_weak: slint::Weak<AppWindow>) -> bool {
+    let dir = std::path::PathBuf::from(PICTURES_DIR);
+    if !dir.exists() {
+        return false;
+    }
+
+    let mut webp_files: Vec<std::path::PathBuf> = Vec::new();
+    if let Ok(mut entries) = tokio::fs::read_dir(&dir).await {
+        while let Ok(Some(entry)) = entries.next_entry().await {
+            let path = entry.path();
+            if path.extension().and_then(|e| e.to_str()) == Some("webp") {
+                webp_files.push(path);
+            }
+        }
+    }
+
+    if webp_files.is_empty() {
+        return false;
+    }
+
+    // ランダムに1枚選択
+    let index = (Local::now().timestamp_subsec_nanos() as usize) % webp_files.len();
+    let chosen = webp_files[index].clone();
+
+    let image_bytes = match tokio::fs::read(&chosen).await {
+        Ok(b) => b,
+        Err(_) => return false,
+    };
+
+    let stem = chosen
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("")
+        .to_string();
+    let txt_path = dir.join(format!("{}.txt", stem));
+    let description = tokio::fs::read_to_string(&txt_path)
+        .await
+        .unwrap_or_default();
+
+    let dynamic_image = match image::load_from_memory(&image_bytes) {
+        Ok(img) => img,
+        Err(_) => return false,
+    };
+    let rgb_image = dynamic_image.into_rgb8();
+    let (width, height) = rgb_image.dimensions();
+    let raw_pixels = rgb_image.into_raw();
+
+    let _ = slint::invoke_from_event_loop(move || {
+        if let Some(window) = window_weak.upgrade() {
+            let buffer = slint::SharedPixelBuffer::<slint::Rgb8Pixel>::clone_from_slice(
+                &raw_pixels,
+                width,
+                height,
+            );
+            let image = slint::Image::from_rgb8(buffer);
+            window.set_image(image);
+            window.set_picture_mode(true);
+            window.set_picture_description(slint::SharedString::from(description));
+            window.set_is_image_loading(false);
+            window.set_is_image_error(false);
+        }
+    });
+
+    true
 }
 
 /// UI スレッドにメッセージリストを更新するよう要求します。

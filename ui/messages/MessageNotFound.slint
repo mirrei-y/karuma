@@ -1,13 +1,6 @@
 import { AppState } from "../state.slint";
 import { Spinner } from "std-widgets.slint";
 export component MessageNotFound inherits VerticalLayout {
-    // 画像の読み込み中かどうか
-    in property <bool> is-image-loading: false;
-    // 画像の取得に失敗したかどうか
-    in property <bool> is-image-error: false;
-    // 表示する画像
-    in property <image> image <=> image.source;
-
     vertical-stretch: 1;
 
     alignment: LayoutAlignment.center;
@@ -19,21 +12,5 @@ export component MessageNotFound inherits VerticalLayout {
         text: "メッセージはありません。";
         font-size: 1rem;
         color: AppState.foreground-color;
-    }
-    VerticalLayout {
-        vertical-stretch: 1; // TODO: 動いてない
-
-        image := Image {}
-
-        if is-image-loading && !is-image-error : Spinner {
-            indeterminate: true;
-        }
-    }
-    if !is-image-error : Text {
-        vertical-stretch: 0;
-        horizontal-alignment: TextHorizontalAlignment.center;
-        text: "画像は不定期で入れ替わります。";
-        font-size: 0.8rem;
-        color: AppState.foreground-color-secondary;
     }
 }

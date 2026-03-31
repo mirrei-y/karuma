@@ -1,4 +1,4 @@
-import type { MessageData } from "../types";
+import type { MessageData, PictureEntry } from "../types";
 
 function getHeaders(): HeadersInit {
     const passphrase = localStorage.getItem("karuma_passphrase") || "";
@@ -82,4 +82,42 @@ export async function getArchive(date: string): Promise<MessageData[]> {
         throw new Error("アーカイブの取得に失敗しました。");
     }
     return response.json();
+}
+
+/**
+ * 投稿された写真の一覧を取得します。
+ * @returns 写真エントリの配列（最新順）
+ */
+export async function getPictures(): Promise<PictureEntry[]> {
+    const response = await fetch("/api/pictures", {
+        headers: getHeaders(),
+    });
+    if (!response.ok) {
+        handleResponseError(response);
+        throw new Error("写真一覧の取得に失敗しました。");
+    }
+    return response.json();
+}
+
+/**
+ * 写真と説明文を投稿します。
+ * @param image 画像ファイル
+ * @param description 説明文
+ */
+export async function uploadPicture(image: File, description: string): Promise<void> {
+    // Authorization ヘッダーを含めるために getHeaders() からトークンを取り出す
+    const headers = getHeaders() as Record<string, string>;
+    const formData = new FormData();
+    formData.append("image", image);
+    formData.append("description", description);
+
+    const response = await fetch("/api/pictures", {
+        method: "POST",
+        headers: { Authorization: headers["Authorization"] },
+        body: formData,
+    });
+    if (!response.ok) {
+        handleResponseError(response);
+        throw new Error("写真のアップロードに失敗しました。");
+    }
 }

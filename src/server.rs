@@ -1,11 +1,12 @@
 mod console;
+pub mod picture;
 
 use axum::{
     extract::{Path, Request},
     http::StatusCode,
     middleware::{self, Next},
     response::Response,
-    routing::{get, post, put},
+    routing::get,
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
@@ -38,16 +39,21 @@ async fn auth_middleware(req: Request, next: Next) -> Result<Response, StatusCod
 
 /// API サーバーを起動します。
 pub async fn run_server(window_weak: slint::Weak<crate::AppWindow>) -> std::io::Result<()> {
-    let api_routes = Router::new()
+    let authed_routes = Router::new()
         .route("/config", get(get_config).post(update_config))
         .route("/messages", get(get_messages).put(update_messages))
         .route("/messages/archives", get(get_archive_list))
         .route("/messages/archives/{date}", get(get_archive))
+        .route("/pictures", get(picture::list_pictures).post(picture::upload_picture))
         .layer(middleware::from_fn(auth_middleware))
         .with_state(window_weak.clone());
 
+    let public_routes = Router::new()
+        .route("/pictures/{id}", get(picture::get_picture_file));
+
     let app = Router::new()
-        .nest("/api", api_routes)
+        .nest("/api", authed_routes)
+        .nest("/api", public_routes)
         .fallback(console::get_static_file)
         .with_state(window_weak);
 

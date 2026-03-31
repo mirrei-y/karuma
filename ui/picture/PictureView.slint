@@ -1,0 +1,50 @@
+import { AppState } from "../state.slint";
+
+export component PictureView inherits VerticalLayout {
+    // 画像の読み込み中かどうか
+    in property <bool> is-image-loading: false;
+    // 画像の取得に失敗したかどうか
+    in property <bool> is-image-error: false;
+    // 表示する画像（catAPI または投稿写真）
+    in property <image> image <=> image-item.source;
+    // 投稿写真モードのとき true（false のときは catAPI 猫画像）
+    in property <bool> picture-mode: false;
+    // 投稿写真の説明文
+    in property <string> picture-description: "";
+
+    alignment: LayoutAlignment.start;
+    spacing: 1rem;
+
+    HorizontalLayout {
+        alignment: LayoutAlignment.start;
+        spacing: 0.5rem;
+
+        VerticalLayout {
+            spacing: 0.5rem;
+            vertical-stretch: 1;
+
+            Text {
+                vertical-stretch: 0;
+                horizontal-alignment: TextHorizontalAlignment.center;
+                text: root.picture-mode ? "今日の一枚" : "猫ちゃん";
+                font-size: 0.6rem;
+                color: AppState.foreground-color;
+            }
+
+            image-item := Image {}
+        }
+        VerticalLayout {
+            vertical-stretch: 1;
+
+            Text {
+                vertical-stretch: 0;
+                horizontal-alignment: TextHorizontalAlignment.center;
+                text: root.picture-mode
+                    ? (root.picture-description != "" ? root.picture-description : "今日の一枚はこちら！")
+                    : "今日の一枚はこちら！";
+                font-size: 0.8rem;
+                color: AppState.foreground-color;
+            }
+        }
+    }
+}
