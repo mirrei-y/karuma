@@ -3,9 +3,7 @@ import { RouterView } from "vue-router";
 </script>
 
 <template>
-    <div :class="$style.appLayout">
-        <RouterView />
-    </div>
+    <RouterView />
 </template>
 
 <style module lang="scss">
@@ -24,10 +22,10 @@ import { RouterView } from "vue-router";
     @media (prefers-color-scheme: dark) {
         --background-color: #000; /* iOS standard Dark */
         --foreground-color: #fff;
-        --card-bg-color: #1c1c1e;
+        --card-bg-color: #1d1d1f;
         --border-color: #38383a;
         --text-muted-color: #8e8e93;
-        --input-bg-color: #1c1c1e;
+        --input-bg-color: #1d1d1f;
         --divider-color: #38383a;
     }
 }
@@ -38,17 +36,18 @@ body {
     margin: 0;
     padding: 0;
     -webkit-font-smoothing: antialiased;
-}
-body,
-input,
-button,
-textarea {
-    color: var(--foreground-color);
+
+    &, input, button, textarea {
+        color: var(--foreground-color);
+    }
 }
 
-.appLayout {
-    min-height: 100vh;
+[data-v-app] {
     display: flex;
     flex-direction: column;
+
+    max-width: 40em;
+    min-height: 100vh;
+    margin-inline: auto;
 }
 </style>

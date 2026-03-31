@@ -23,9 +23,9 @@ function login() {
 <template>
     <div :class="$style.page">
         <NavBar
-            :title="isLoggedIn ? 'アカウント設定' : 'ログイン'"
+            :title="isLoggedIn ? '名前を変える' : 'ログイン'"
             :show-back="isLoggedIn"
-            back-text="設定"
+            back-text="戻る"
             back-to="/"
         />
         <main :class="$style.content">

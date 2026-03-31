@@ -81,7 +81,7 @@ async function toggleEntry(entry: ArchiveEntry) {
 
 <template>
     <div :class="$style.page">
-        <NavBar title="過去のメッセージ" show-back back-text="設定" back-to="/" />
+        <NavBar title="過去のメッセージを見る" show-back back-text="戻る" back-to="/" />
 
         <main :class="$style.content">
             <section v-if="isLoading" :class="$style.empty">読み込み中...</section>

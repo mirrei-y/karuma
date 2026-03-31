@@ -86,7 +86,7 @@ async function saveChanges() {
 
 <template>
     <div :class="$style.page">
-        <NavBar title="メッセージ管理" show-back back-text="設定" back-to="/">
+        <NavBar title="メッセージを書き換える" show-back back-text="戻る" back-to="/">
             <template #right>
                 <div :class="$style.saveIndicator" v-if="isSaving">
                     <span>保存中...</span>

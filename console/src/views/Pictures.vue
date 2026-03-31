@@ -64,7 +64,7 @@ async function submit() {
 
 <template>
     <div :class="$style.page">
-        <NavBar title="写真投稿" show-back back-text="設定" back-to="/" />
+        <NavBar title="写真を投稿する" show-back back-text="戻る" back-to="/" />
 
         <main :class="$style.content">
             <!-- 投稿フォーム -->
