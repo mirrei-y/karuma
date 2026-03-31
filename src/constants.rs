@@ -1,3 +1,4 @@
+pub const WEB_DIR: &str = "web";
 pub const DATA_DIR: &str = "data";
 pub const ARCHIVES_DIR: &str = "archives";
 pub const MESSAGES_FILE: &str = "data/messages.toml";
@@ -13,4 +14,3 @@ pub const PICTURE_RETENTION_DAYS: i64 = 7;
 
 /// 30分ごとに PictureView の表示内容を切り替える間隔（分）
 pub const PICTURE_SWITCH_INTERVAL: usize = 30;
-//
