@@ -16,32 +16,34 @@ export component PictureView inherits VerticalLayout {
     spacing: 1rem;
 
     HorizontalLayout {
-        alignment: LayoutAlignment.start;
+        alignment: root.picture-mode ? LayoutAlignment.start : LayoutAlignment.center;
         spacing: 0.5rem;
 
         VerticalLayout {
+            alignment: LayoutAlignment.center;
             spacing: 0.5rem;
             vertical-stretch: 1;
 
             Text {
                 vertical-stretch: 0;
                 horizontal-alignment: TextHorizontalAlignment.center;
-                text: root.picture-mode ? "今日の一枚" : "猫ちゃん";
+                text: root.picture-mode ? "今日の一枚" : "猫ちゃんの写真";
                 font-size: 0.6rem;
                 color: AppState.foreground-color;
             }
 
-            image-item := Image {}
+            image-item := Image {
+                horizontal-stretch: 10;
+                vertical-stretch: 10;
+            }
         }
-        VerticalLayout {
+        if root.picture-mode && root.picture-description != "" : VerticalLayout {
             vertical-stretch: 1;
 
             Text {
                 vertical-stretch: 0;
                 horizontal-alignment: TextHorizontalAlignment.center;
-                text: root.picture-mode
-                    ? (root.picture-description != "" ? root.picture-description : "今日の一枚はこちら！")
-                    : "今日の一枚はこちら！";
+                text: root.picture-description;
                 font-size: 0.8rem;
                 color: AppState.foreground-color;
             }
