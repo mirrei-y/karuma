@@ -1,5 +1,14 @@
 import type { MessageData, PictureEntry } from "../types";
 
+class HttpResponseError extends Error {
+    public response: Response;
+
+    public constructor(response: Response) {
+        super(`HTTP Error ${response.status}`);
+        this.response = response;
+    }
+}
+
 function getHeaders(): HeadersInit {
     const passphrase = localStorage.getItem("karuma_passphrase") || "";
     // TextEncoderを使用してUTF-8エンコードし、Base64に変換 (unescapeの代替)
@@ -32,7 +41,7 @@ export async function getMessages(): Promise<MessageData[]> {
     });
     if (!response.ok) {
         handleResponseError(response);
-        throw new Error("メッセージの取得に失敗しました。");
+        throw new HttpResponseError(response);
     }
     return response.json();
 }
@@ -49,7 +58,7 @@ export async function updateMessages(messages: MessageData[]): Promise<void> {
     });
     if (!response.ok) {
         handleResponseError(response);
-        throw new Error("メッセージの更新に失敗しました。");
+        throw new HttpResponseError(response);
     }
 }
 
@@ -63,7 +72,7 @@ export async function getArchiveList(): Promise<string[]> {
     });
     if (!response.ok) {
         handleResponseError(response);
-        throw new Error("アーカイブ一覧の取得に失敗しました。");
+        throw new HttpResponseError(response);
     }
     return response.json();
 }
@@ -79,7 +88,7 @@ export async function getArchive(date: string): Promise<MessageData[]> {
     });
     if (!response.ok) {
         handleResponseError(response);
-        throw new Error("アーカイブの取得に失敗しました。");
+        throw new HttpResponseError(response);
     }
     return response.json();
 }
@@ -94,7 +103,7 @@ export async function getPictures(): Promise<PictureEntry[]> {
     });
     if (!response.ok) {
         handleResponseError(response);
-        throw new Error("写真一覧の取得に失敗しました。");
+        throw new HttpResponseError(response);
     }
     return response.json();
 }
@@ -110,7 +119,7 @@ export async function getSnapshot(): Promise<string> {
     });
     if (!response.ok) {
         handleResponseError(response);
-        throw new Error("スナップショットの取得に失敗しました。");
+        throw new HttpResponseError(response);
     }
     const blob = await response.blob();
     return URL.createObjectURL(blob);
@@ -118,10 +127,10 @@ export async function getSnapshot(): Promise<string> {
 
 /**
  * 写真と説明文を投稿します。
- * @param image 画像ファイル
+ * @param image 画像ファイルまたは Blob（Canvas で圧縮済みのものを渡す）
  * @param description 説明文
  */
-export async function uploadPicture(image: File, description: string): Promise<void> {
+export async function uploadPicture(image: Blob, description: string): Promise<void> {
     // Authorization ヘッダーを含めるために getHeaders() からトークンを取り出す
     const headers = getHeaders() as Record<string, string>;
     const formData = new FormData();
@@ -135,6 +144,6 @@ export async function uploadPicture(image: File, description: string): Promise<v
     });
     if (!response.ok) {
         handleResponseError(response);
-        throw new Error("写真のアップロードに失敗しました。");
+        throw new HttpResponseError(response);
     }
 }
