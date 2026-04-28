@@ -45,12 +45,12 @@ pub async fn run_server(window_weak: slint::Weak<crate::AppWindow>) -> std::io::
         .route("/messages", get(get_messages).put(update_messages))
         .route("/messages/archives", get(get_archive_list))
         .route("/messages/archives/{date}", get(get_archive))
-        .route("/pictures", get(picture::list_pictures).post(picture::upload_picture))
         .route("/snapshot", get(snapshot::get_snapshot))
         .layer(middleware::from_fn(auth_middleware))
         .with_state(window_weak.clone());
 
     let public_routes = Router::new()
+        .route("/pictures", get(picture::list_pictures).post(picture::upload_picture))
         .route("/pictures/{id}", get(picture::get_picture_file));
 
     let app = Router::new()

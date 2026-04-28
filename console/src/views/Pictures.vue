@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { ImagePlus } from "@lucide/vue";
 import type { PictureEntry } from "../types";
 import { getPictures, uploadPicture } from "../api";
 import NavBar from "../components/NavBar.vue";
+
+const isLoggedIn = computed(() => !!localStorage.getItem("karuma_passphrase"));
 
 const MAX_SIZE = 1000;
 const WEBP_QUALITY = 0.85;
@@ -122,7 +124,7 @@ async function submit() {
 
 <template>
     <div :class="$style.page">
-        <NavBar title="写真を投稿する" show-back back-text="戻る" back-to="/" />
+        <NavBar title="写真を投稿する" :show-back="isLoggedIn" back-text="戻る" back-to="/" />
 
         <main :class="$style.content">
             <!-- 投稿フォーム -->

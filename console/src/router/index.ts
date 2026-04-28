@@ -35,7 +35,6 @@ const router = createRouter({
             path: "/pictures",
             name: "pictures",
             component: PicturesView,
-            meta: { requiresAuth: true },
         },
     ],
 });
