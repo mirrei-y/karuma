@@ -11,6 +11,12 @@ export component ScheduleRow inherits HorizontalLayout {
     // 文字色
     in-out property <color> foreground-color: AppState.foreground-color;
 
+    // 時間帯（例: 18:00～19:00）
+    in-out property <string> time-range: "18:00～19:00";
+
+    // 予定のタイトル
+    in-out property <string> title: "予定のタイトル";
+
     vertical-stretch: 0;
     alignment: LayoutAlignment.start;
     spacing: 0.5rem;
@@ -31,7 +37,7 @@ export component ScheduleRow inherits HorizontalLayout {
 
         font-size: 1rem * root.font-size;
         color: foreground-color;
-        text: "18:00～19:00";
+        text: root.time-range;
     }
     Text {
         horizontal-alignment: TextHorizontalAlignment.left;
@@ -39,6 +45,6 @@ export component ScheduleRow inherits HorizontalLayout {
 
         font-size: 1rem * root.font-size;
         color: foreground-color;
-        text: "予定A （あああ）";
+        text: root.title;
     }
 }

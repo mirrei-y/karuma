@@ -9,6 +9,7 @@ edition = "2021"
 axum = { version = "0.8.8", features = ["multipart"] }
 base64 = "0.22.1"
 chrono = "0.4.44"
+ical = "0.11.0"
 image = "0.25.10"
 lazy_static = "1.5.0"
 mime_guess = "2.0.5"

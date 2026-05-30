@@ -2,6 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 #![feature(random)]
 
+mod api;
 mod catapi;
 mod constants;
 mod message;
@@ -45,6 +46,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // NOTE: 起動時に既存のメッセージを読み込む
     let messages = message::load_messages();
     ui::renew_message(window_weak.clone(), messages);
+
+    // NOTE: 起動時にカレンダーを取得
+    let window_weak_calendar = window_weak.clone();
+    tokio::spawn(async move {
+        ui::fetch_and_renew_schedule(window_weak_calendar).await;
+    });
 
     // NOTE: 毎日午前3時に実行されるスレッド
     let window_weak_cleanup = window_weak.clone();

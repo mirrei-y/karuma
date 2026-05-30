@@ -14,3 +14,9 @@ pub const PICTURE_RETENTION_DAYS: i64 = 7;
 
 /// 30分ごとに PictureView の表示内容を切り替える間隔（分）
 pub const PICTURE_SWITCH_INTERVAL: usize = 30;
+
+/// Google カレンダーの ICS 公開 URL
+pub const CALENDAR_ICS_URL: &str = "https://calendar.google.com/calendar/ical/.../basic.ics";
+
+/// カレンダー情報をキャッシュする秒数（1時間）
+pub const CALENDAR_CACHE_DURATION_SECS: u64 = 3600;

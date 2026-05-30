@@ -147,3 +147,33 @@ pub fn renew_message(window_weak: slint::Weak<AppWindow>, messages: Vec<crate::m
         }
     });
 }
+
+/// Google カレンダーから予定を取得して UI を更新します。
+pub async fn fetch_and_renew_schedule(window_weak: slint::Weak<AppWindow>) {
+    match crate::api::calendar::get_calendar().await {
+        Ok(events) => {
+            let schedules = crate::api::calendar::convert_to_schedules(events);
+            let _ = slint::invoke_from_event_loop(move || {
+                if let Some(window) = window_weak.upgrade() {
+                    window.set_schedules(slint::ModelRc::from(std::rc::Rc::new(
+                        slint::VecModel::from(schedules),
+                    )));
+                }
+            });
+        }
+        Err(e) => {
+            eprintln!("カレンダーの取得に失敗しました: {}", e);
+        }
+    }
+}
+
+/// UI スレッドにスケジュールリストを更新するよう要求します（互換性用）。
+pub fn renew_schedule(window_weak: slint::Weak<AppWindow>, schedules: Vec<crate::Schedule>) {
+    let _ = slint::invoke_from_event_loop(move || {
+        if let Some(window) = window_weak.upgrade() {
+            window.set_schedules(slint::ModelRc::from(std::rc::Rc::new(
+                slint::VecModel::from(schedules),
+            )));
+        }
+    });
+}

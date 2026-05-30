@@ -1,16 +1,23 @@
 import { ScheduleRow } from "ScheduleRow.slint";
 import { AppState } from "../state.slint";
 
+export struct Schedule {
+    time-range: string,
+    title: string,
+    is-future: bool,
+}
+
 export component ScheduleList inherits VerticalLayout {
+    in-out property <[Schedule]> schedules;
+
     alignment: LayoutAlignment.start;
     spacing: 1rem;
 
-    ScheduleRow {
-        is-future: false;
-    }
-    ScheduleRow {
-        is-future: true;
-        font-size: 0.8;
-        foreground-color: AppState.foreground-color-secondary;
+    for schedule in root.schedules : ScheduleRow {
+        is-future: schedule.is-future;
+        time-range: schedule.time-range;
+        title: schedule.title;
+        font-size: schedule.is-future ? 0.8 : 1.0;
+        foreground-color: schedule.is-future ? AppState.foreground-color-secondary : AppState.foreground-color;
     }
 }

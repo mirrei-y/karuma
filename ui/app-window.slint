@@ -3,7 +3,7 @@ import { Date, Time } from "types/datetime.slint";
 import { Line } from "utils/Line.slint";
 import { HeaderDatetime } from "header/HeaderDatetime.slint";
 import { ScheduleRow } from "schedule/ScheduleRow.slint";
-import { ScheduleList } from "schedule/ScheduleList.slint";
+import { ScheduleList, Schedule } from "schedule/ScheduleList.slint";
 import { MessageList, Message } from "messages/MessageList.slint";
 import { MessageNotFound } from "messages/MessageNotFound.slint";
 import { PictureView } from "picture/PictureView.slint";
@@ -93,6 +93,12 @@ export component AppWindow inherits Window {
     // 投稿写真の説明文
     in property <string> picture-description: "";
 
+    // スケジュールのリスト
+    in property <[Schedule]> schedules: [
+        // { time-range: "18:00～19:00", title: "予定A （あああ）", is-future: false },
+        // { time-range: "20:00～21:00", title: "予定B", is-future: true },
+    ];
+
     callback request-increase-value();
 
     VerticalLayout {
@@ -113,7 +119,7 @@ export component AppWindow inherits Window {
 
         Rectangle {
             property <int> active-page: 1;
-            property <int> page-count: 2; // ここを増やせば3つ以上に対応できます
+            property <int> page-count: 3; // ここを増やせば3つ以上に対応できます
 
             Timer {
                 interval: 30s;
@@ -146,6 +152,24 @@ export component AppWindow inherits Window {
                     image: root.image;
                     picture-mode: root.picture-mode;
                     picture-description: root.picture-description;
+                }
+            }
+
+            Rectangle {
+                opacity: parent.active-page == 2 ? 1.0 : 0.0;
+                animate opacity { duration: 500ms; }
+
+                ScheduleList {
+                    schedules: root.schedules;
+                }
+            }
+
+            Rectangle {
+                opacity: parent.active-page == 2 ? 1.0 : 0.0;
+                animate opacity { duration: 500ms; }
+
+                ScheduleList {
+                    schedules: root.schedules;
                 }
             }
         }
