@@ -1,5 +1,6 @@
 // Prevent console window in addition to Slint window in Windows release builds when, e.g., starting the app via file manager. Ignored on other platforms.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+#![feature(random)]
 
 mod catapi;
 mod constants;
@@ -100,7 +101,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             });
 
             // 投稿写真が存在する場合は 50% の確率でそちらを表示する
-            let use_user_picture = (chrono::Local::now().timestamp() % 2) == 0;
+            let use_user_picture = std::random::random::<bool>(..);
             if !use_user_picture || !ui::renew_user_picture(window_weak_pic.clone()).await {
                 // 投稿写真がなかった場合は catAPI にフォールバック
                 let _ = slint::invoke_from_event_loop({

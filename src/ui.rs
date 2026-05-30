@@ -75,7 +75,7 @@ pub async fn renew_user_picture(window_weak: slint::Weak<AppWindow>) -> bool {
     }
 
     // ランダムに1枚選択
-    let index = (Local::now().timestamp_subsec_nanos() as usize) % webp_files.len();
+    let index = std::random::random::<usize>(..) % webp_files.len();
     let chosen = webp_files[index].clone();
 
     let image_bytes = match tokio::fs::read(&chosen).await {
