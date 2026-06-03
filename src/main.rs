@@ -103,16 +103,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             // 投稿写真が存在する場合は 50% の確率でそちらを表示する
             let use_user_picture = std::random::random::<bool>(..);
             if !use_user_picture || !ui::renew_user_picture(window_weak_pic.clone()).await {
-                // 投稿写真がなかった場合は catAPI にフォールバック
-                let _ = slint::invoke_from_event_loop({
-                    let w = window_weak_pic.clone();
-                    move || {
-                        if let Some(window) = w.upgrade() {
-                            window.set_picture_mode(false);
-                            window.set_picture_description(slint::SharedString::from(""));
-                        }
-                    }
-                });
+                // 投稿写真がなかった場合は Cat API にフォールバック
                 ui::renew_cat_image(window_weak_pic.clone()).await;
             }
         }

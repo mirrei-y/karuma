@@ -37,6 +37,8 @@ pub async fn renew_cat_image(window_weak: slint::Weak<AppWindow>) {
                 );
                 let image = slint::Image::from_rgb8(buffer);
                 window.set_image(image);
+                window.set_picture_mode(false);
+                window.set_picture_description(slint::SharedString::from(""));
                 window.set_is_image_loading(false);
                 window.set_is_image_error(false);
             });
