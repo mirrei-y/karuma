@@ -26,7 +26,6 @@ slint = { version = "1.14.1", default-features = false, features = ["backend-lin
 slint-build = "1.14.1"
 
 [profile.release]
-codegen-units = 1
-debug = false
-strip = true
 lto = true
+opt-level = "z"
+strip = true
