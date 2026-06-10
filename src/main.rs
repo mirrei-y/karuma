@@ -7,8 +7,10 @@ mod constants;
 mod message;
 mod server;
 mod ui;
+mod utils;
 
 use std::error::Error;
+use utils::cron::schedule_at;
 
 slint::include_modules!();
 
@@ -25,48 +27,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
         }
     });
 
-    // NOTE: 毎日午前3時に期限切れ写真を削除する
-    tokio::spawn(async move {
-        loop {
-            let now = chrono::Local::now();
-            let mut next_3am = now.date_naive().and_hms_opt(3, 0, 0).unwrap();
-            if now.time() >= chrono::NaiveTime::from_hms_opt(3, 0, 0).unwrap() {
-                next_3am += chrono::Duration::days(1);
-            }
-            let next_3am_tz = next_3am.and_local_timezone(chrono::Local).unwrap();
-            let delay = (next_3am_tz - now)
-                .to_std()
-                .unwrap_or(std::time::Duration::from_secs(0));
-            tokio::time::sleep(delay).await;
-            server::picture::cleanup_old_pictures().await;
-        }
+    // NOTE: 毎日午前3時に期限切れ写真を削除し、メッセージをアーカイブする
+    schedule_at(3, 0, 0, &window_weak, |window| {
+        tokio::spawn(server::picture::cleanup_old_pictures());
+        message::archive_messages(window.as_weak());
     });
 
     // NOTE: 起動時に既存のメッセージを読み込む
     let messages = message::load_messages();
     ui::renew_message(window_weak.clone(), messages);
-
-    // NOTE: 毎日午前3時に実行されるスレッド
-    let window_weak_cleanup = window_weak.clone();
-    std::thread::spawn(move || {
-        loop {
-            let now = chrono::Local::now();
-            let mut next_3am = now.date_naive().and_hms_opt(3, 0, 0).unwrap();
-
-            // NOTE: すでに今日の午前3時を過ぎている場合は明日の午前3時をターゲットとする
-            if now.time() >= chrono::NaiveTime::from_hms_opt(3, 0, 0).unwrap() {
-                next_3am += chrono::Duration::days(1);
-            }
-            let next_3am_tz = next_3am.and_local_timezone(chrono::Local).unwrap();
-
-            // NOTE: 待機時間を計算しスリープ
-            let delay = (next_3am_tz - now).to_std().unwrap_or(std::time::Duration::from_secs(0));
-            std::thread::sleep(delay);
-
-            // NOTE: メッセージのアーカイブ
-            message::archive_messages(window_weak_cleanup.clone());
-        }
-    });
 
     // NOTE: 1秒ごとに実行されるスレッド
     let window_weak_per_sec = window_weak.clone();
@@ -112,77 +81,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
     });
 
     // NOTE: 毎日午後7時にメッセージページに固定する
-    tokio::spawn({
-        let window_weak = window_weak.clone();
-        async move {
-            loop {
-                let now = chrono::Local::now();
-                let mut next_7pm = now.date_naive().and_hms_opt(19, 0, 0).unwrap();
-                if now.time() >= chrono::NaiveTime::from_hms_opt(19, 0, 0).unwrap() {
-                    next_7pm += chrono::Duration::days(1);
-                }
-                let next_7pm_tz = next_7pm.and_local_timezone(chrono::Local).unwrap();
-                let delay = (next_7pm_tz - now)
-                    .to_std()
-                    .unwrap_or(std::time::Duration::from_secs(0));
-                tokio::time::sleep(delay).await;
-
-                let window_weak = window_weak.clone();
-                let _ = slint::invoke_from_event_loop(move || {
-                    window_weak.upgrade().map(|w| {
-                        w.set_enable_page_switching(false);
-                        w.set_current_page(0);
-                    });
-                });
-            }
-        }
+    schedule_at(19, 0, 0, &window_weak, |window| {
+        window.set_enable_page_switching(false);
+        window.set_current_page(0);
     });
     // NOTE: 毎日午前7時にページを可変にする
-    tokio::spawn({
-        let window_weak = window_weak.clone();
-        async move {
-            loop {
-                let now = chrono::Local::now();
-                let mut next_7am = now.date_naive().and_hms_opt(7, 0, 0).unwrap();
-                if now.time() >= chrono::NaiveTime::from_hms_opt(7, 0, 0).unwrap() {
-                    next_7am += chrono::Duration::days(1);
-                }
-                let next_7am_tz = next_7am.and_local_timezone(chrono::Local).unwrap();
-                let delay = (next_7am_tz - now)
-                    .to_std()
-                    .unwrap_or(std::time::Duration::from_secs(0));
-                tokio::time::sleep(delay).await;
-
-                let window_weak = window_weak.clone();
-                let _ = slint::invoke_from_event_loop(move || {
-                    window_weak.upgrade().map(|w| {
-                        w.set_enable_page_switching(true);
-                    });
-                });
-            }
-        }
+    schedule_at(7, 0, 0, &window_weak, |window| {
+        window.set_enable_page_switching(true);
     });
-
-    // let timer = Timer::default();
-    // timer.start(TimerMode::Repeated, std::time::Duration::from_millis(200), {
-    //     let ui_handle = ui.as_weak();
-    //     move || {
-    //         let the_model: Rc<VecModel<Message>> = Rc::new(VecModel::from(vec![
-    //             Message {
-    //                 date: Date {
-    //                     month: 1,
-    //                     day: 1,
-    //                     dayOfWeek: 0,
-    //                 },
-    //                 time: Time { hour: 12, minute: 0 },
-    //                 author: SharedString::from(""),
-    //                 text: SharedString::from("Happy New Year!"),
-    //             }
-    //         ]));
-    //         let the_model_rc = ModelRc::from(the_model.clone());
-    //         ui.set_messages(the_model_rc);
-    //     }
-    // });
 
     window.run()?;
 
