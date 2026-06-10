@@ -69,12 +69,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
     });
 
     // NOTE: 1秒ごとに実行されるスレッド
+    let window_weak_per_sec = window_weak.clone();
     std::thread::spawn(move || {
         loop {
             let delay_ms = 1000 - chrono::Local::now().timestamp_subsec_millis() + 5;
             std::thread::sleep(std::time::Duration::from_millis(delay_ms as u64));
 
-            let window_weak_clone = window_weak.clone();
+            let window_weak_clone = window_weak_per_sec.clone();
             let _ = slint::invoke_from_event_loop(move || {
                 // NOTE: 日時を更新
                 ui::renew_datetime(window_weak_clone);
@@ -83,13 +84,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
     });
     ui::renew_datetime(window.as_weak());
 
-    // NOTE: 起動時に画像を読み込み、以降30分ごとに入れ替える
+    // NOTE: 起動時に画像を読み込み、以降30分ごとに画像を入れ替える
     let window_weak_pic = window.as_weak();
     tokio::spawn(async move {
         let interval_mins = constants::PICTURE_SWITCH_INTERVAL as u64;
         let mut ticker = tokio::time::interval(std::time::Duration::from_mins(interval_mins));
         loop {
             ticker.tick().await;
+
+            // NOTE: 画面をロード中にする
             let _ = slint::invoke_from_event_loop({
                 let w = window_weak_pic.clone();
                 move || {
@@ -100,11 +103,62 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 }
             });
 
-            // 投稿写真が存在する場合は 50% の確率でそちらを表示する
+            // NOTE: 50%/50% の確率でユーザ写真と Cat API の画像を表示
             let use_user_picture = std::random::random::<bool>(..);
             if !use_user_picture || !ui::renew_user_picture(window_weak_pic.clone()).await {
-                // 投稿写真がなかった場合は Cat API にフォールバック
                 ui::renew_cat_image(window_weak_pic.clone()).await;
+            }
+        }
+    });
+
+    // NOTE: 毎日午後7時にメッセージページに固定する
+    tokio::spawn({
+        let window_weak = window_weak.clone();
+        async move {
+            loop {
+                let now = chrono::Local::now();
+                let mut next_7pm = now.date_naive().and_hms_opt(19, 0, 0).unwrap();
+                if now.time() >= chrono::NaiveTime::from_hms_opt(19, 0, 0).unwrap() {
+                    next_7pm += chrono::Duration::days(1);
+                }
+                let next_7pm_tz = next_7pm.and_local_timezone(chrono::Local).unwrap();
+                let delay = (next_7pm_tz - now)
+                    .to_std()
+                    .unwrap_or(std::time::Duration::from_secs(0));
+                tokio::time::sleep(delay).await;
+
+                let window_weak = window_weak.clone();
+                let _ = slint::invoke_from_event_loop(move || {
+                    window_weak.upgrade().map(|w| {
+                        w.set_enable_page_switching(false);
+                        w.set_current_page(0);
+                    });
+                });
+            }
+        }
+    });
+    // NOTE: 毎日午前7時にページを可変にする
+    tokio::spawn({
+        let window_weak = window_weak.clone();
+        async move {
+            loop {
+                let now = chrono::Local::now();
+                let mut next_7am = now.date_naive().and_hms_opt(7, 0, 0).unwrap();
+                if now.time() >= chrono::NaiveTime::from_hms_opt(7, 0, 0).unwrap() {
+                    next_7am += chrono::Duration::days(1);
+                }
+                let next_7am_tz = next_7am.and_local_timezone(chrono::Local).unwrap();
+                let delay = (next_7am_tz - now)
+                    .to_std()
+                    .unwrap_or(std::time::Duration::from_secs(0));
+                tokio::time::sleep(delay).await;
+
+                let window_weak = window_weak.clone();
+                let _ = slint::invoke_from_event_loop(move || {
+                    window_weak.upgrade().map(|w| {
+                        w.set_enable_page_switching(true);
+                    });
+                });
             }
         }
     });

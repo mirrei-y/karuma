@@ -93,6 +93,11 @@ export component AppWindow inherits Window {
     // 投稿写真の説明文
     in property <string> picture-description: "";
 
+    // 現在表示しているページ（0: メッセージ, 1: 画像）
+    in-out property <int> current-page: 1;
+    // ページ切り替えの自動化を有効にするかどうか
+    in property <bool> enable-page-switching: true;
+
     callback request-increase-value();
 
     VerticalLayout {
@@ -112,22 +117,21 @@ export component AppWindow inherits Window {
         Line {}
 
         Rectangle {
-            property <int> active-page: 1;
             property <int> page-count: 2; // ここを増やせば3つ以上に対応できます
 
             Timer {
                 interval: 30s;
-                running: true;
+                running: root.enable-page-switching;
                 triggered => {
-                    parent.active-page += 1;
-                    if (parent.active-page >= parent.page-count) {
-                        parent.active-page = 0;
+                    root.current-page += 1;
+                    if (root.current-page >= parent.page-count) {
+                        root.current-page = 0;
                     }
                 }
             }
 
             Rectangle {
-                opacity: parent.active-page == 0 ? 1.0 : 0.0;
+                opacity: root.current-page == 0 ? 1.0 : 0.0;
                 animate opacity { duration: 500ms; }
 
                 if root.messages.length == 0 : MessageNotFound {}
@@ -137,7 +141,7 @@ export component AppWindow inherits Window {
             }
 
             Rectangle {
-                opacity: parent.active-page == 1 ? 1.0 : 0.0;
+                opacity: root.current-page == 1 ? 1.0 : 0.0;
                 animate opacity { duration: 500ms; }
 
                 PictureView {
