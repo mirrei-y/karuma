@@ -22,20 +22,17 @@ pub struct AppConfigPayload {
 const PASSPHRASE: &str = "PASSPHRASE_HERE";
 
 async fn auth_middleware(req: Request, next: Next) -> Result<Response, StatusCode> {
-    if let Some(auth_header) = req.headers().get("authorization") {
-        if let Ok(auth_str) = auth_header.to_str() {
-            if let Some(base64_passphrase) = auth_str.strip_prefix("Bearer ") {
-                if let Ok(decoded_bytes) = general_purpose::STANDARD.decode(base64_passphrase) {
-                    if let Ok(decoded_str) = String::from_utf8(decoded_bytes) {
-                        if decoded_str == PASSPHRASE {
-                            return Ok(next.run(req).await);
-                        }
-                    }
-                }
-            }
-        }
+    let encoded_passphrase = req.headers().get("authorization").ok_or(StatusCode::UNAUTHORIZED)?
+        .to_str().or(Err(StatusCode::BAD_REQUEST))?
+        .strip_prefix("Bearer ").ok_or(StatusCode::UNAUTHORIZED)?;
+    let decoded_passphrase_bytes = general_purpose::STANDARD.decode(encoded_passphrase).or(Err(StatusCode::UNAUTHORIZED))?;
+    let decoded_passphrase = String::from_utf8(decoded_passphrase_bytes).or(Err(StatusCode::UNAUTHORIZED))?;
+
+    if decoded_passphrase == PASSPHRASE {
+        return Ok(next.run(req).await);
+    } else {
+        return Err(StatusCode::UNAUTHORIZED);
     }
-    Err(StatusCode::UNAUTHORIZED)
 }
 
 /// API サーバーを起動します。
